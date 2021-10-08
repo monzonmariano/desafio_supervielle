@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
+import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.supervielle.desafio_tecnico.model.Persona;
@@ -29,7 +31,7 @@ import com.supervielle.desafio_tecnico.repository.RelacionesRepository;
 
 @RestController
 @RequestMapping("/api")
-public class PersonaController {
+public class PersonaController implements ErrorController{
 
 	private PersonaRepository personaRepository;
 
@@ -44,7 +46,18 @@ public class PersonaController {
 	List<Relaciones> relacionesTotal() {
 		return relacionRepository.findAll();
 	}
-
+    
+	//ESTO ES POR HEROKU YA QUE SINO LANZARA EL ERROR: This application has no explicit mapping for /error, so you are seeing this as a fallback.
+	private final static String PATH = "/error";
+    @Override
+    @RequestMapping(PATH)
+    @ResponseBody
+    public String getErrorPath() {
+        // TODO Auto-generated method stub
+        return "No Mapping Found";
+    }
+	
+	
 	@GetMapping("/personas")
 	Collection<Persona> personas() {
 		return personaRepository.findAll();
@@ -296,4 +309,6 @@ public class PersonaController {
 		}
 		
 	}
+
+	
 }
