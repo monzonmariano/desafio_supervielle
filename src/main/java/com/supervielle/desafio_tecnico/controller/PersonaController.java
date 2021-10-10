@@ -246,7 +246,8 @@ public class PersonaController implements ErrorController {
 	ResponseEntity<String> deletePersona(@PathVariable Long id) {
 		Optional<Persona> persona = personaRepository.findById(id);
 		System.out.println("El sysout de la persona: " + persona);
-		if (!persona.isEmpty()) {
+		//!isEmpty() DABA ERROR EN COMPILADOR DE HEROKU POR ALGUN VERSIONADO DEL JDK
+		if (persona.get().getId() > 0) {
 			personaRepository.deleteById(id);
 
 			return ResponseEntity.ok().body("Se eliminó la persona: " + persona.get());
@@ -264,9 +265,11 @@ public class PersonaController implements ErrorController {
 		Optional<Persona> persona1 = personaRepository.findById(id1);
 
 		// EXISTE EL ID1 EN LA TABLA PERSONA?
+		//!isEmpty() DABA ERROR EN COMPILADOR DE HEROKU POR ALGUN VERSIONADO DEL JDK
 		if (persona1.get().getId() > 0 ) {
 			Optional<Persona> persona2 = personaRepository.findById(id2);
 			// EXISTE EL ID2 EN LA TABLA PERSONA?
+			//!isEmpty() DABA ERROR EN COMPILADOR DE HEROKU POR ALGUN VERSIONADO DEL JDK
 			if (persona2.get().getId() > 0) {
 
 				// OK DEBEMOS COMPARAR LAS LISTAS DE RELACIONES DE LOS IDs
@@ -386,9 +389,11 @@ public class PersonaController implements ErrorController {
 		Optional<Persona> persona1 = personaRepository.findById(id1);
 		boolean relacionDistinta = false;
 		// EXISTE EL ID1 EN LA TABLA PERSONA?
+		//!isEmpty() DABA ERROR EN COMPILADOR DE HEROKU POR ALGUN VERSIONADO DEL JDK
 		if (persona1.get().getId() > 0) {
 			Optional<Persona> persona2 = personaRepository.findById(id2);
 			// EXISTE EL ID2 EN LA TABLA PERSONA?
+			//!isEmpty() DABA ERROR EN COMPILADOR DE HEROKU POR ALGUN VERSIONADO DEL JDK
 			if (persona2.get().getId() > 0) {
 				// OK AHORA ITERAMOS PARA VERIFICAR SI HAY RELACION ENTRE ESTAS 2 PERSONAS
 
