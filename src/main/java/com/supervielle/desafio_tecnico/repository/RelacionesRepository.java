@@ -6,7 +6,7 @@ package com.supervielle.desafio_tecnico.repository;
 
 
 
-import java.util.List;
+
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

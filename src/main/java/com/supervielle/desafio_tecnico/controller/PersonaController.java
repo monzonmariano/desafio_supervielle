@@ -264,10 +264,10 @@ public class PersonaController implements ErrorController {
 		Optional<Persona> persona1 = personaRepository.findById(id1);
 
 		// EXISTE EL ID1 EN LA TABLA PERSONA?
-		if (!persona1.isEmpty()) {
+		if (persona1.get().getId() > 0 ) {
 			Optional<Persona> persona2 = personaRepository.findById(id2);
 			// EXISTE EL ID2 EN LA TABLA PERSONA?
-			if (!persona2.isEmpty()) {
+			if (persona2.get().getId() > 0) {
 
 				// OK DEBEMOS COMPARAR LAS LISTAS DE RELACIONES DE LOS IDs
 
@@ -386,10 +386,10 @@ public class PersonaController implements ErrorController {
 		Optional<Persona> persona1 = personaRepository.findById(id1);
 		boolean relacionDistinta = false;
 		// EXISTE EL ID1 EN LA TABLA PERSONA?
-		if (!persona1.isEmpty()) {
+		if (persona1.get().getId() > 0) {
 			Optional<Persona> persona2 = personaRepository.findById(id2);
 			// EXISTE EL ID2 EN LA TABLA PERSONA?
-			if (!persona2.isEmpty()) {
+			if (persona2.get().getId() > 0) {
 				// OK AHORA ITERAMOS PARA VERIFICAR SI HAY RELACION ENTRE ESTAS 2 PERSONAS
 
 				for (Relaciones relacion_i : relacionesTotal()) {

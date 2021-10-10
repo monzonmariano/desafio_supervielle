@@ -2,13 +2,13 @@ package com.supervielle.desafio_tecnico.model;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.IdClass;
+
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
+
 import lombok.ToString;
 
 //Uso un id para cada relacion entre ids
