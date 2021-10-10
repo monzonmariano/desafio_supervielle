@@ -28,7 +28,7 @@ public class Persona {
 	private long id;
     
   
-	private Long dni;
+	private long dni;
 	
   
 	private String pais;
@@ -44,11 +44,6 @@ public class Persona {
     
     private int edad;
 
-	@Override
-	public String toString() {
-		return "[id=" + id + ", dni=" + dni + ", pais=" + pais + ", sexo=" + sexo + ", dato_contacto="
-				+ dato_contacto + ", tipo_dni=" + tipo_dni + ", edad=" + edad + "]";
-	}
 
 	
 	

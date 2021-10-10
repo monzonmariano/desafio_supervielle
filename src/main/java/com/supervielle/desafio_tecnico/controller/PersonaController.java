@@ -6,12 +6,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
 
 import javax.validation.Valid;
 
+
 import org.springframework.boot.web.servlet.error.ErrorController;
-import org.springframework.data.jpa.repository.Query;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,10 +29,13 @@ import com.supervielle.desafio_tecnico.model.Persona;
 import com.supervielle.desafio_tecnico.model.Relaciones;
 import com.supervielle.desafio_tecnico.repository.PersonaRepository;
 import com.supervielle.desafio_tecnico.repository.RelacionesRepository;
+import com.supervielle.desafio_tecnico.utilidades.CountryValidator;
+import com.supervielle.desafio_tecnico.utilidades.EmailValidatorUnicode;
+import com.supervielle.desafio_tecnico.utilidades.TipoDNIValidator;
 
 @RestController
 @RequestMapping("/api")
-public class PersonaController implements ErrorController{
+public class PersonaController implements ErrorController {
 
 	private PersonaRepository personaRepository;
 
@@ -46,18 +50,23 @@ public class PersonaController implements ErrorController{
 	List<Relaciones> relacionesTotal() {
 		return relacionRepository.findAll();
 	}
-    
-	//ESTO ES POR HEROKU YA QUE SINO LANZARA EL ERROR: This application has no explicit mapping for /error, so you are seeing this as a fallback.
+
+	List<Persona> listadoPersonas() {
+		return personaRepository.findAll();
+	}
+
+	// ESTO ES POR HEROKU YA QUE SINO LANZARA EL ERROR: This application has no
+	// explicit mapping for /error, so you are seeing this as a fallback.
 	private final static String PATH = "/error";
-    @Override
-    @RequestMapping(PATH)
-    @ResponseBody
-    public String getErrorPath() {
-        // TODO Auto-generated method stub
-        return "No Mapping Found";
-    }
-	
-	
+
+	@Override
+	@RequestMapping(PATH)
+	@ResponseBody
+	public String getErrorPath() {
+		// TODO Auto-generated method stub
+		return "No Mapping Found";
+	}
+
 	@GetMapping("/personas")
 	Collection<Persona> personas() {
 		return personaRepository.findAll();
@@ -108,36 +117,142 @@ public class PersonaController implements ErrorController{
 		return persona.map(response -> ResponseEntity.ok().body(response))
 				.orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
 	}
-    
 
 	@PostMapping("/persona")
 	ResponseEntity<Persona> createPersona(@Valid @RequestBody Persona persona) throws URISyntaxException {
-		//
-		if(persona != null && persona.getEdad() >= 18 && persona.getDato_contacto() != null) {
-		Persona result = personaRepository.save(persona);
-		return ResponseEntity.created(new URI("/api/persona" + result.getId())).body(result);
-		}else {
-			return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+		boolean encontro = false;
+		// FILTROS PARA LA INGRESADA A LA BASE DE DATOS
+		// > 18 AÑOS
+		// MAIL DE CONTACTO VALIDO (EJM AL MENOS UN ALGO@ALGO.COM APROX) Y NO REPETIDO
+		// EN OTRA PERSONA(SALVO QUE SEA UN CAMBIO EN LA MISMA PERSONA)
+		// PAIS VALIDO
+		// DOCUMENTO QUE CONTENGA EL MINIMO DE DIGITOS Y NO REPETIDO EN OTRA PERSONA
+		// (SALVO QUE SEA UN CAMBIO EN LA MISMA PERSONA)
+
+		// SI ES MAYOR DE 18 AÑOS
+		if (persona.getEdad() >= 18) {
+			// CHECKEAMOS QUE SEA VALIDO EL MAIL
+			if (EmailValidatorUnicode.isValid(persona.getDato_contacto())) {
+				// CHECKEAMOS QUE SEA VALIDO EL PAIS
+				if (CountryValidator.isValid(persona.getPais())) {
+					// CHECKEAMOS QUE EL DNI TENGA EL MINIMO DE 8 DIGITOS
+					if (String.valueOf(persona.getDni()).length() >= 7
+							&& String.valueOf(persona.getDni()).length() <= 8) {
+						// CHECKEAMOS QUE EL TIPO DE DNI SEA VALIDO (DNI,LIBRETA ENROLAMIENTO,LIBRETA
+						// CIVICA)
+						if (TipoDNIValidator.isValid(persona.getTipo_dni())) {
+							// VALIDAMOS QUE EL SEXO QUE COLOQUEN SEA O M O F
+							if (persona.getSexo().toUpperCase().equals("M")
+									|| persona.getSexo().toUpperCase().equals("F")) {
+								// SI YA EXISTE EL ID EN LA BASE DE DATOS Y SE TRATA DE UN CAMBIO
+								if (personaRepository.existsById(persona.getId())) {
+									Persona result = personaRepository.save(persona);
+									return ResponseEntity.created(new URI("/api/persona" + result.getId()))
+											.body(result);
+									// SI NO EXISTE EL ID EN LA BASE DE DATOS Y ES NUEVA PERSONA
+								} else {
+									// LOOPEO PARA VER SI NO SE REPITE EL DNI Y EL DATO DE CONTACTO EN LA BASE DE
+									// DATOS
+									for (Persona iterable_persona : listadoPersonas()) {
+										// SI ENCUENTRA EL MISMO DNI O DATO DE CONTACTO ENTONCES NO GUARDA
+										if (iterable_persona.getDni() == persona.getDni() || iterable_persona
+												.getDato_contacto().equals(persona.getDato_contacto())) {
+											encontro = true;
+										}
+									}
+									// SI NO ENCONTRO UNA PERSONA EN LOS REGISTROS ENTONCES SAVE UNO NUEVO
+									if (!encontro) {
+
+										Persona result = personaRepository.save(persona);
+										return ResponseEntity.created(new URI("/api/persona" + result.getId()))
+												.body(result);
+
+									}
+
+								}
+							}
+						}
+					}
+				}
+			}
+
 		}
+
+		return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
 	}
 
-	@PutMapping("/persona/{id}")
+	@PutMapping("/persona")
 	ResponseEntity<Persona> updatePersona(@Valid @RequestBody Persona persona) {
+		boolean encontro = false;
+		// FILTROS PARA LA INGRESADA A LA BASE DE DATOS
+		// > 18 AÑOS
+		// MAIL DE CONTACTO VALIDO (EJM AL MENOS UN ALGO@ALGO.COM APROX) Y NO REPETIDO
+		// EN OTRA PERSONA(SALVO QUE SEA UN CAMBIO EN LA MISMA PERSONA)
+		// PAIS VALIDO
+		// DOCUMENTO QUE CONTENGA EL MINIMO DE DIGITOS Y NO REPETIDO EN OTRA PERSONA
+		// (SALVO QUE SEA UN CAMBIO EN LA MISMA PERSONA)
 
+		// SI ES MAYOR DE 18 AÑOS
 		if (persona.getEdad() >= 18) {
-			Persona result = personaRepository.save(persona);
-			return ResponseEntity.ok().body(result);
-		} else {
-			return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+			// CHECKEAMOS QUE SEA VALIDO EL MAIL
+			if (EmailValidatorUnicode.isValid(persona.getDato_contacto())) {
+				// CHECKEAMOS QUE SEA VALIDO EL PAIS
+				if (CountryValidator.isValid(persona.getPais())) {
+					// CHECKEAMOS QUE EL DNI TENGA EL MINIMO DE 8 DIGITOS
+					if (String.valueOf(persona.getDni()).length() >= 7
+							&& String.valueOf(persona.getDni()).length() <= 8) {
+						// CHECKEAMOS QUE EL TIPO DE DNI SEA VALIDO (DNI,LIBRETA ENROLAMIENTO,LIBRETA
+						// CIVICA)
+						if (TipoDNIValidator.isValid(persona.getTipo_dni())) {
+							// VALIDAMOS QUE EL SEXO QUE COLOQUEN SEA O M O F
+							if (persona.getSexo().toUpperCase().equals("M")
+									|| persona.getSexo().toUpperCase().equals("F")) {
+								// SI YA EXISTE EL ID EN LA BASE DE DATOS Y SE TRATA DE UN CAMBIO
+								if (personaRepository.existsById(persona.getId())) {
+									Persona result = personaRepository.save(persona);
+									return ResponseEntity.ok().body(result);
+									// SI NO EXISTE EL ID EN LA BASE DE DATOS Y ES NUEVA PERSONA
+								} else {
+									// LOOPEO PARA VER SI NO SE REPITE EL DNI Y EL DATO DE CONTACTO EN LA BASE DE
+									// DATOS
+									for (Persona iterable_persona : listadoPersonas()) {
+										// SI ENCUENTRA EL MISMO DNI O DATO DE CONTACTO ENTONCES NO GUARDA
+										if (iterable_persona.getDni() == persona.getDni() || iterable_persona
+												.getDato_contacto().equals(persona.getDato_contacto())) {
+											encontro = true;
+										}
+									}
+									// SI NO ENCONTRO UNA PERSONA EN LOS REGISTROS ENTONCES SAVE UNO NUEVO
+									if (!encontro) {
+
+										Persona result = personaRepository.save(persona);
+										return ResponseEntity.ok().body(result);
+
+									}
+
+								}
+							}
+						}
+					}
+				}
+			}
+
 		}
+
+		return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
 	}
 
 	@DeleteMapping("/persona/{id}")
-	ResponseEntity<?> deletePersona(@PathVariable Long id) {
-		if(personaRepository.findById(id) != null) {
+	ResponseEntity<String> deletePersona(@PathVariable Long id) {
+		Optional<Persona> persona = personaRepository.findById(id);
+		System.out.println("El sysout de la persona: " + persona);
+		if (!persona.isEmpty()) {
 			personaRepository.deleteById(id);
-		return ResponseEntity.ok().build();
-		}else {
+
+			return ResponseEntity.ok().body("Se eliminó la persona: " + persona.get());
+
+		} else {
+
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -149,10 +264,10 @@ public class PersonaController implements ErrorController{
 		Optional<Persona> persona1 = personaRepository.findById(id1);
 
 		// EXISTE EL ID1 EN LA TABLA PERSONA?
-		if (persona1 != null) {
+		if (!persona1.isEmpty()) {
 			Optional<Persona> persona2 = personaRepository.findById(id2);
 			// EXISTE EL ID2 EN LA TABLA PERSONA?
-			if (persona2 != null) {
+			if (!persona2.isEmpty()) {
 
 				// OK DEBEMOS COMPARAR LAS LISTAS DE RELACIONES DE LOS IDs
 
@@ -166,8 +281,8 @@ public class PersonaController implements ErrorController{
 					if (relacion_i.getId_1() == id1 && relacion_i.getId_2() == id2
 							&& relacion_i.getRelacion().contains("PADRE")) {
 						// SI ID1 YA ES PADRE DE ID 2
-						return ResponseEntity.ok()
-								.body("El id : " + relacion_i.getId_1() + " ya es PADRE de id: " + relacion_i.getId_2());
+						return ResponseEntity.ok().body(
+								"El id : " + relacion_i.getId_1() + " ya es PADRE de id: " + relacion_i.getId_2());
 					} else if (relacion_i.getId_1() == id2 && relacion_i.getId_2() == id1
 							&& relacion_i.getRelacion().contains("PADRE")) {
 						// SI ID2 ES PADRE DE ID1 OSEA ID1 ES HIJO DE ID2
@@ -215,7 +330,6 @@ public class PersonaController implements ErrorController{
 
 							}
 						}
-						
 
 					}
 
@@ -232,27 +346,35 @@ public class PersonaController implements ErrorController{
 
 				if (relacionModificada && relacionDesvinculada) {
 
-					return ResponseEntity.ok().body("ID: " + id1 + " con los datos: "+persona1.toString() + " ahora es padre de ID: " + id2
-							+ " con los datos: "+persona2.toString()+" , se ha modificado una relación preexistente distinta de padre y desvinculado una o varias de padre");
+					return ResponseEntity.ok().body("ID: " + id1 + " con los datos: " + persona1
+							+ " ahora es padre de ID: " + id2 + " con los datos: " + persona2.toString()
+							+ " , se ha modificado una relación preexistente distinta de padre y desvinculado una o varias de padre");
 
 				} else if (relacionDesvinculada) {
 
-					return ResponseEntity.ok().body("ID: " + id1 + " con los datos: "+persona1.toString()+" ahora es padre de ID: " + id2
-							+" con los datos: "+persona2.toString()+ " y se ha desvinculado una o varias relaciones preexistentes de padre");
+					return ResponseEntity.ok()
+							.body("ID: " + id1 + " con los datos: " + persona1 + " ahora es padre de ID: " + id2
+									+ " con los datos: " + persona2.toString()
+									+ " y se ha desvinculado una o varias relaciones preexistentes de padre");
 
 				} else if (relacionModificada) {
-					return ResponseEntity.ok().body("ID: " + id1 +" con los datos: "+persona1.toString() + " ahora es padre de ID: " + id2
-							+ " con los datos: "+persona2.toString()+" y se ha modificado una relación preexistente distinta de padre");
+					return ResponseEntity.ok()
+							.body("ID: " + id1 + " con los datos: " + persona1 + " ahora es padre de ID: " + id2
+									+ " con los datos: " + persona2.toString()
+									+ " y se ha modificado una relación preexistente distinta de padre");
 
 				} else {
-					return ResponseEntity.ok().body("ID: " + id1 + " con los datos: "+persona1.toString() + " ahora es padre de ID: " + id2+" con los datos: "+persona2.toString());
+					return ResponseEntity.ok().body("ID: " + id1 + " con los datos: " + persona1
+							+ " ahora es padre de ID: " + id2 + " con los datos: " + persona2.toString());
 				}
 			} else {
-				return ResponseEntity.ok().body("La persona con ID: " + id1 + " no existe");
+				// SI LA PERSONA CON ID2 NO EXISTE
+				return ResponseEntity.notFound().build();
 			}
 
 		} else {
-			return ResponseEntity.ok().body("La persona con ID: " + id2 + " no existe");
+			// SI LA PERSONA CON ID1 NO EXISTE
+			return ResponseEntity.notFound().build();
 		}
 
 	}
@@ -264,51 +386,53 @@ public class PersonaController implements ErrorController{
 		Optional<Persona> persona1 = personaRepository.findById(id1);
 		boolean relacionDistinta = false;
 		// EXISTE EL ID1 EN LA TABLA PERSONA?
-		if (persona1 != null) {
+		if (!persona1.isEmpty()) {
 			Optional<Persona> persona2 = personaRepository.findById(id2);
 			// EXISTE EL ID2 EN LA TABLA PERSONA?
-			if (persona2 != null) {
+			if (!persona2.isEmpty()) {
 				// OK AHORA ITERAMOS PARA VERIFICAR SI HAY RELACION ENTRE ESTAS 2 PERSONAS
 
 				for (Relaciones relacion_i : relacionesTotal()) {
-					//SI HAY RELACION DE HERMANO , TIO O PRIMO ...
-					if (relacion_i.getId_1() == id1 && relacion_i.getId_2() == id2 || relacion_i.getId_1() == id2 && relacion_i.getId_2()== id1) {
+					// SI HAY RELACION DE HERMANO , TIO O PRIMO ...
+					if (relacion_i.getId_1() == id1 && relacion_i.getId_2() == id2
+							|| relacion_i.getId_1() == id2 && relacion_i.getId_2() == id1) {
 						if (relacion_i.getRelacion().contains("TIO") || relacion_i.getRelacion().contains("PRIMO")
 								|| relacion_i.getRelacion().contains("HERMANO")) {
-							return ResponseEntity.ok().body("La relación de la persona: "+persona1.toString() + "\ncon la persona: "+persona2.toString()+ "\nes : " + relacion_i.getRelacion());
+							return ResponseEntity.ok().body("La relación de la persona: " + persona1
+									+ "\ncon la persona: " + persona2 + "\nes : " + relacion_i.getRelacion());
 						}
 					}
-					
-					//SI LA RELACIÓN ES DISTINTA DE HERMANO TIO O PRIMO
-					if(relacion_i.getId_1() == id1 && relacion_i.getId_2() == id2
+
+					// SI LA RELACIÓN ES DISTINTA DE HERMANO TIO O PRIMO
+					if (relacion_i.getId_1() == id1 && relacion_i.getId_2() == id2
 							&& relacion_i.getRelacion().contains("PADRE")) {
 						relacionDistinta = true;
 					}
-					
-					if(relacion_i.getId_1() == id2 && relacion_i.getId_2() == id1
+
+					if (relacion_i.getId_1() == id2 && relacion_i.getId_2() == id1
 							&& relacion_i.getRelacion().contains("PADRE")) {
 						relacionDistinta = true;
 					}
-					
-					
 
 				}
-				
-				if(relacionDistinta) {
-					return ResponseEntity.ok().body("La relación entre ambos es distinta al filtro solicitado en el desafio");
+
+				if (relacionDistinta) {
+					return ResponseEntity.ok()
+							.body("La relación entre ambos es distinta al filtro solicitado en el desafio");
 				}
-				
+
 				return ResponseEntity.ok().body("La relación entre ambos no existe");
 
 			} else {
-				return ResponseEntity.ok().body("La persona con ID: " + id2 + " no existe");
+				// SI LA PERSONA CON ID2 NO EXISTE
+				return ResponseEntity.notFound().build();
 			}
 
 		} else {
-			return ResponseEntity.ok().body("La persona con ID: " + id1 + " no existe");
+			// SI LA PERSONA CON ID1 NO EXISTE
+			return ResponseEntity.notFound().build();
 		}
-		
+
 	}
 
-	
 }
