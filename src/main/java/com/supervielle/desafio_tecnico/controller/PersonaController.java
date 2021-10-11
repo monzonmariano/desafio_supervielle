@@ -135,7 +135,7 @@ public class PersonaController implements ErrorController {
 			if (EmailValidatorUnicode.isValid(persona.getDato_contacto())) {
 				// CHECKEAMOS QUE SEA VALIDO EL PAIS
 				if (CountryValidator.isValid(persona.getPais())) {
-					// CHECKEAMOS QUE EL DNI TENGA EL MINIMO DE 8 DIGITOS
+					// CHECKEAMOS QUE EL DNI TENGA EL MINIMO DE 7 DIGITOS O COMO MÁXIMO 8
 					if (String.valueOf(persona.getDni()).length() >= 7
 							&& String.valueOf(persona.getDni()).length() <= 8) {
 						// CHECKEAMOS QUE EL TIPO DE DNI SEA VALIDO (DNI,LIBRETA ENROLAMIENTO,LIBRETA
@@ -198,7 +198,7 @@ public class PersonaController implements ErrorController {
 			if (EmailValidatorUnicode.isValid(persona.getDato_contacto())) {
 				// CHECKEAMOS QUE SEA VALIDO EL PAIS
 				if (CountryValidator.isValid(persona.getPais())) {
-					// CHECKEAMOS QUE EL DNI TENGA EL MINIMO DE 8 DIGITOS
+					// CHECKEAMOS QUE EL DNI TENGA EL MINIMO DE 7 DIGITOS O COMO MÁXIMO 8
 					if (String.valueOf(persona.getDni()).length() >= 7
 							&& String.valueOf(persona.getDni()).length() <= 8) {
 						// CHECKEAMOS QUE EL TIPO DE DNI SEA VALIDO (DNI,LIBRETA ENROLAMIENTO,LIBRETA
