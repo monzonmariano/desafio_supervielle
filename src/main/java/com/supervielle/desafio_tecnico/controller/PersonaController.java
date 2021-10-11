@@ -34,7 +34,6 @@ import com.supervielle.desafio_tecnico.utilidades.EmailValidatorUnicode;
 import com.supervielle.desafio_tecnico.utilidades.TipoDNIValidator;
 
 @RestController
-@RequestMapping("/api")
 public class PersonaController implements ErrorController {
 
 	private PersonaRepository personaRepository;
