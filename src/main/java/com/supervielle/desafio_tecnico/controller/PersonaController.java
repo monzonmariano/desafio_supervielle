@@ -34,6 +34,7 @@ import com.supervielle.desafio_tecnico.utilidades.EmailValidatorUnicode;
 import com.supervielle.desafio_tecnico.utilidades.TipoDNIValidator;
 
 @RestController
+@RequestMapping("/")
 public class PersonaController implements ErrorController {
 
 	private PersonaRepository personaRepository;
@@ -65,7 +66,12 @@ public class PersonaController implements ErrorController {
 		// TODO Auto-generated method stub
 		return "No Mapping Found";
 	}
-
+	
+	@GetMapping("/")
+    public String index() {
+        return "Hello there! I'm running.";
+    }
+	
 	@GetMapping("/personas")
 	Collection<Persona> personas() {
 		return personaRepository.findAll();
