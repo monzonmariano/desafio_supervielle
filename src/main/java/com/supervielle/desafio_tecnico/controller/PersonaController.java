@@ -408,8 +408,8 @@ public class PersonaController implements ErrorController {
 							|| relacion_i.getId_1() == id2 && relacion_i.getId_2() == id1) {
 						if (relacion_i.getRelacion().contains("TIO") || relacion_i.getRelacion().contains("PRIMO")
 								|| relacion_i.getRelacion().contains("HERMANO")) {
-							return ResponseEntity.ok().body("La relación de la persona: " + persona1
-									+ "\ncon la persona: " + persona2 + "\nes : " + relacion_i.getRelacion());
+							return ResponseEntity.ok().body("<h1>La relación de la persona: " + persona1
+									+ "\ncon la persona: " + persona2 + "\nes : " + relacion_i.getRelacion()+"</h1>");
 						}
 					}
 
